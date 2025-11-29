@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>내 프로필</title>
+
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .infoBox {
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background: #f8f8f8;
+      margin-bottom: 20px;
+    }
+    .postItem {
+      padding: 10px;
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>내 프로필</h2>
+
+  <div class="infoBox">
+    <p><b>이메일:</b> <span id="email"></span></p>
+    <p><b>UID:</b> <span id="uid"></span></p>
+
+    <p><b>닉네임:</b> <span id="nickname"></span></p>
+    <input type="text" id="nicknameInput" placeholder="새 닉네임 입력" />
+    <button id="saveNicknameBtn">닉네임 변경</button>
+  </div>
+
+  <button onclick="logout()" style="margin-bottom:20px;">로그아웃</button>
+
+  <h3>내가 작성한 게시물</h3>
+  <div id="myPosts"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgKHGln9fdP3Fo4P_cm0CK3Vwl4GeTeUE",
+      authDomain: "dongnaldo-51239.firebaseapp.com",
+      projectId: "dongnaldo-51239",
+      storageBucket: "dongnaldo-51239.appspot.com",
+      messagingSenderId: "129624651466",
+      appId: "1:129624651466:web:ff1069d13895f9b537e633",
+      measurementId: "G-M3M2B819Q3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        alert("로그인이 필요합니다!");
+        location.href = "login.html";
+        return;
+      }
+
+      document.getElementById("email").textContent = user.email;
+      document.getElementById("uid").textContent = user.uid;
+
+      // Firestore에서 닉네임 불러오기
+      const userDoc = await db.collection("users").doc(user.uid).get();
+
+      if (userDoc.exists) {
+        document.getElementById("nickname").textContent = userDoc.data().nickname;
+      } else {
+        document.getElementById("nickname").textContent = "닉네임 없음";
+      }
+
+      loadMyPosts(user.uid);
+    });
+
+    // 닉네임 저장
+    document.getElementById("saveNicknameBtn").addEventListener("click", async () => {
+      const newNick = document.getElementById("nicknameInput").value.trim();
+      if (!newNick) return alert("닉네임을 입력하세요!");
+
+      const user = auth.currentUser;
+      await db.collection("users").doc(user.uid).set(
+        { nickname: newNick },
+        { merge: true }
+      );
+
+      alert("닉네임 변경 완료!");
+      document.getElementById("nickname").textContent = newNick;
+      document.getElementById("nicknameInput").value = "";
+    });
+
+    // 내 글 목록 불러오기
+    async function loadMyPosts(uid) {
+      const list = document.getElementById("myPosts");
+      list.innerHTML = "";
+
+      const snapshot = await db
+        .collection("posts")
+        .where("userId", "==", uid)
+        .orderBy("createdAt", "desc")
+        .get();
+
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const div = document.createElement("div");
+        div.className = "postItem";
+
+        div.innerHTML = `
+          <b>${p.title}</b><br>
+          ${p.content}<br>
+          <small>${p.createdAt.toDate()}</small>
+        `;
+
+        list.appendChild(div);
+      });
+    }
+
+    // 로그아웃
+    function logout() {
+      auth.signOut();
+      alert("로그아웃됨!");
+      location.href = "index.html";
+    }
+  </script>
+
+</body>
+</html>
