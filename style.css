@@ -1,0 +1,12 @@
+body {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+    background: #f5f5f5;
+}
+
+.figma-screen {
+    width: 400px; /* 스마트폰 화면 크기처럼 보이게 */
+    border: 1px solid #ddd;
+    border-radius: 15px;
+}
