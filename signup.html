@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>회원가입</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+    .box {
+      width: 300px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background: #fafafa;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      background: #28a745;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    a {
+      display: block;
+      margin-top: 15px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>회원가입</h2>
+
+  <div class="box">
+    <input type="email" id="email" placeholder="이메일 입력" />
+    <input type="password" id="pw" placeholder="비밀번호 입력" />
+    <button id="signupBtn">회원가입</button>
+    <a href="login.html">로그인하러 가기</a>
+    <a href="index.html">홈으로</a>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgKHGln9fdP3Fo4P_cm0CK3Vwl4GeTeUE",
+      authDomain: "dongnaldo-51239.firebaseapp.com",
+      projectId: "dongnaldo-51239",
+      storageBucket: "dongnaldo-51239.firebasestorage.app",
+      messagingSenderId: "129624651466",
+      appId: "1:129624651466:web:ff1069d13895f9b537e633",
+      measurementId: "G-M3M2B819Q3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    document.getElementById("signupBtn").addEventListener("click", () => {
+      const email = document.getElementById("email").value;
+      const pw = document.getElementById("pw").value;
+
+      auth.createUserWithEmailAndPassword(email, pw)
+        .then(() => {
+          alert("회원가입 완료!");
+          location.href = "login.html";
+        })
+        .catch(err => alert("에러: " + err.message));
+    });
+  </script>
+
+</body>
+</html>
