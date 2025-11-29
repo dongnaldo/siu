@@ -1,91 +1,55 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SIU</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIU Community</title>
 
   <style>
-    body { 
-      font-family: Arial; 
-      margin: 0;
-      background-color: #fff;
-    }
-
-    /* 화면 전체 컨테이너 */
-    .screen {
-      position: relative;
-      width: 412px;
-      margin: 0 auto;
-    }
-
-    /* Figma에서 가져온 전체 이미지 */
-    .bg {
-      width: 100%;
-      display: block;
-    }
-
-    /* 이미지 위 버튼 */
-    .overlay-btn {
-      position: absolute;
-      bottom: 130px; 
-      left: 50%;
-      transform: translateX(-50%);
-      width: 160px;
-      height: 45px;
-      font-size: 17px;
-      font-weight: 600;
-      background: #6C5CE7;
-      color: white;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    /* 게시글 작성 UI */
-    #writePage, #listPage {
-      display: none;
-      width: 412px;
-      margin: 20px auto;
-      padding: 10px;
-    }
-
+    body { font-family: Arial; padding: 20px; }
     .postItem {
+      margin-bottom: 30px;
+      padding: 15px;
       border: 1px solid #ddd;
-      padding: 10px;
-      margin: 10px 0;
       border-radius: 10px;
+      background: #fafafa;
+    }
+    .commentBox {
+      margin-top: 15px;
+      padding-top: 10px;
+      border-top: 1px solid #ccc;
+    }
+    .commentInput {
+      width: 70%;
+      padding: 6px;
+    }
+    .commentBtn {
+      padding: 6px 12px;
+    }
+    .commentList div {
+      margin-top: 5px;
+      padding: 5px 8px;
+      background: #efefef;
+      border-radius: 6px;
     }
   </style>
 </head>
+
 <body>
+  <h2>게시글 작성</h2>
 
-  <!-- 🔥 첫 화면: Figma 이미지 + 버튼 -->
-  <div class="screen" id="homeScreen">
-    <img src="Android Compact - 1.png" class="bg">
-    <button class="overlay-btn" id="goWriteBtn">게시글 작성하기</button>
-  </div>
+  <input type="text" id="titleInput" placeholder="제목 입력" />
+  <br /><br />
 
+  <textarea id="contentInput" placeholder="내용 입력"></textarea>
+  <br /><br />
 
-  <!-- 🔥 글 작성 화면 -->
-  <div id="writePage">
-    <h2>게시글 작성</h2>
-    <input type="text" id="titleInput" placeholder="제목 입력" style="width:100%;"><br><br>
-    <textarea id="contentInput" placeholder="내용 입력" style="width:100%; height:120px;"></textarea>
-    <br><br>
-    <button id="addPostBtn">게시글 추가</button>
-    <button onclick="showHome()">홈으로</button>
-  </div>
+  <button id="addPostBtn">게시글 추가</button>
 
+  <hr />
 
-  <!-- 🔥 게시글 목록 화면 -->
-  <div id="listPage">
-    <h2>게시글 목록</h2>
-    <div id="postList"></div>
-    <button onclick="showHome()">홈으로</button>
-  </div>
-
+  <h2>게시글 목록</h2>
+  <div id="postList"></div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -107,32 +71,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 화면 이동 기능
-    function showHome() {
-      homeScreen.style.display = "block";
-      writePage.style.display = "none";
-      listPage.style.display = "none";
-    }
-    function showWrite() {
-      homeScreen.style.display = "none";
-      writePage.style.display = "block";
-      listPage.style.display = "none";
-    }
-    function showList() {
-      homeScreen.style.display = "none";
-      writePage.style.display = "none";
-      listPage.style.display = "block";
-    }
 
-    // 첫 화면 버튼
-    document.getElementById("goWriteBtn").addEventListener("click", () => {
-      showWrite();
-    });
 
-    // 게시글 추가
+    /* -------------------------------
+       1) 게시글 추가
+    ------------------------------- */
     document.getElementById("addPostBtn").addEventListener("click", async () => {
-      const title = titleInput.value.trim();
-      const content = contentInput.value.trim();
+      const title = document.getElementById("titleInput").value.trim();
+      const content = document.getElementById("contentInput").value.trim();
 
       if (!title || !content) {
         alert("제목과 내용을 입력하세요!");
@@ -142,37 +88,109 @@
       await db.collection("posts").add({
         title,
         content,
-        createdAt: new Date()
+        createdAt: new Date(),
       });
 
-      alert("게시글이 저장되었습니다!");
-      titleInput.value = "";
-      contentInput.value = "";
-
+      alert("게시글 추가 완료!");
       loadPosts();
-      showList();
     });
 
-    // 게시글 불러오기
+
+
+    /* -------------------------------
+       2) 게시글 + 댓글 전체 불러오기
+    ------------------------------- */
     async function loadPosts() {
       const postList = document.getElementById("postList");
       postList.innerHTML = "";
 
-      const snapshot = await db.collection("posts").orderBy("createdAt", "desc").get();
+      const snapshot = await db
+        .collection("posts")
+        .orderBy("createdAt", "desc")
+        .get();
 
-      snapshot.forEach(doc => {
+      snapshot.forEach((doc) => {
         const p = doc.data();
-        const div = document.createElement("div");
-        div.className = "postItem";
-        div.innerHTML = `
+
+        const box = document.createElement("div");
+        box.className = "postItem";
+
+        box.innerHTML = `
           <h3>${p.title}</h3>
           <p>${p.content}</p>
           <small>${p.createdAt.toDate()}</small>
+
+          <div class="commentBox">
+            <input type="text" class="commentInput" placeholder="댓글 입력">
+            <button class="commentBtn" data-id="${doc.id}">댓글 달기</button>
+            <div class="commentList" id="comments_${doc.id}"></div>
+          </div>
         `;
-        postList.appendChild(div);
+
+        postList.appendChild(box);
+
+        // 댓글 불러오기
+        loadComments(doc.id);
       });
     }
-  </script>
 
+
+
+    /* -------------------------------
+       3) 댓글 저장
+    ------------------------------- */
+    document.addEventListener("click", async (e) => {
+      if (!e.target.classList.contains("commentBtn")) return;
+
+      const postId = e.target.getAttribute("data-id");
+      const input = e.target.previousElementSibling;
+      const text = input.value.trim();
+
+      if (!text) return alert("댓글을 입력하세요!");
+
+      await db
+        .collection("posts")
+        .doc(postId)
+        .collection("comments")
+        .add({
+          userId: "guest",
+          nickname: "익명",
+          text,
+          createdAt: new Date(),
+        });
+
+      input.value = "";
+      loadComments(postId);
+    });
+
+
+
+    /* -------------------------------
+       4) 댓글 불러오기
+    ------------------------------- */
+    async function loadComments(postId) {
+      const commentList = document.getElementById("comments_" + postId);
+      commentList.innerHTML = "";
+
+      const snapshot = await db
+        .collection("posts")
+        .doc(postId)
+        .collection("comments")
+        .orderBy("createdAt", "asc")
+        .get();
+
+      snapshot.forEach((doc) => {
+        const c = doc.data();
+
+        const div = document.createElement("div");
+        div.textContent = `${c.nickname}: ${c.text}`;
+        commentList.appendChild(div);
+      });
+    }
+
+
+    // 페이지 열릴 때 실행
+    loadPosts();
+  </script>
 </body>
 </html>
