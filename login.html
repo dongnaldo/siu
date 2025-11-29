@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>로그인</title>
+</head>
+<body>
+  <h2>로그인</h2>
+
+  <input id="email" type="email" placeholder="이메일"><br><br>
+  <input id="password" type="password" placeholder="비밀번호"><br><br>
+
+  <button id="loginBtn">로그인</button><br><br>
+
+  <a href="signup.html">회원가입 하기</a><br>
+  <a href="index.html">홈으로</a>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgKHGln9fdP3Fo4P_cm0CK3Vwl4GeTeUE",
+      authDomain: "dongnaldo-51239.firebaseapp.com",
+      projectId: "dongnaldo-51239",
+      storageBucket: "dongnaldo-51239.appspot.com",
+      messagingSenderId: "129624651466",
+      appId: "1:129624651466:web:ff1069d13895f9b537e633",
+      measurementId: "G-M3M2B819Q3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+
+        alert("로그인 성공!");
+        location.href = "index.html";
+      } catch (err) {
+        alert("에러: " + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
