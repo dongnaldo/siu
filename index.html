@@ -32,16 +32,30 @@
       background: #efefef;
       border-radius: 6px;
     }
+    .authorLink {
+      color: blue;
+      cursor: pointer;
+      text-decoration: underline;
+    }
   </style>
 </head>
 
 <body>
-        <!-- 상단 네비게이션 메뉴 -->
-    <div class="topMenu" style="position:fixed; top:10px; right:10px; display:flex; gap:10px;">
+
+  <!-- 상단 네비게이션 메뉴 (로그인 상태에 따라 바뀜) -->
+  <div class="topMenu" style="position:fixed; top:10px; right:10px; display:flex; gap:10px;">
     <a href="index.html" style="padding:6px 10px; background:white; border:1px solid #ddd; border-radius:5px; text-decoration:none;">홈</a>
-    <a href="login.html" style="padding:6px 10px; background:white; border:1px solid #ddd; border-radius:5px; text-decoration:none;">로그인</a>
-    <a href="signup.html" style="padding:6px 10px; background:white; border:1px solid #ddd; border-radius:5px; text-decoration:none;">회원가입</a>
+
+    <div id="authMenu">
+      <a href="login.html" style="padding:6px 10px; background:white; border:1px solid #ddd; border-radius:5px; text-decoration:none;">로그인</a>
+      <a href="signup.html" style="padding:6px 10px; background:white; border:1px solid #ddd; border-radius:5px; text-decoration:none;">회원가입</a>
     </div>
+
+    <div id="userMenu" style="display:none;">
+      <a href="profile.html" style="padding:6px 10px; background:white; border:1px solid #ddd; border-radius:5px; text-decoration:none;">내 프로필</a>
+      <a href="#" id="logoutBtn" style="padding:6px 10px; background:#ffe6e6; border:1px solid #ffaaaa; border-radius:5px; text-decoration:none;">로그아웃</a>
+    </div>
+  </div>
 
   <h2>게시글 작성</h2>
 
@@ -60,29 +74,44 @@
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <script>
     // Firebase 설정
     const firebaseConfig = {
-    apiKey: "AIzaSyBgKHGln9fdP3Fo4P_cm0CK3Vwl4GeTeUE",
-    authDomain: "dongnaldo-51239.firebaseapp.com",
-    projectId: "dongnaldo-51239",
-    storageBucket: "dongnaldo-51239.appspot.com",
-    messagingSenderId: "129624651466",
-    appId: "1:129624651466:web:ff1069d13895f9b537e633",
-    measurementId: "G-M3M2B819Q3"
+      apiKey: "AIzaSyBgKHGln9fdP3Fo4P_cm0CK3Vwl4GeTeUE",
+      authDomain: "dongnaldo-51239.firebaseapp.com",
+      projectId: "dongnaldo-51239",
+      storageBucket: "dongnaldo-51239.appspot.com",
+      messagingSenderId: "129624651466",
+      appId: "1:129624651466:web:ff1069d13895f9b537e633",
+      measurementId: "G-M3M2B819Q3"
     };
 
-
-    // Firebase 초기화
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
-
+    const auth = firebase.auth();
 
     /* -------------------------------
-       1) 게시글 추가
+       A) 로그인 상태 감지 → UI 업데이트
+    ------------------------------- */
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById("authMenu").style.display = "none";
+        document.getElementById("userMenu").style.display = "flex";
+      } else {
+        document.getElementById("authMenu").style.display = "flex";
+        document.getElementById("userMenu").style.display = "none";
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      auth.signOut().then(() => location.reload());
+    });
+
+    /* -------------------------------
+       1) 게시글 추가 (작성자 포함)
     ------------------------------- */
     document.getElementById("addPostBtn").addEventListener("click", async () => {
       const title = document.getElementById("titleInput").value.trim();
@@ -93,39 +122,54 @@
         return;
       }
 
-      await db.collection("posts").add({
+      const user = auth.currentUser;
+
+      let postData = {
         title,
         content,
-        createdAt: new Date(),
-      });
+        createdAt: new Date()
+      };
+
+      // 로그인한 사람만 작성자 기록
+      if (user) {
+        postData.authorUid = user.uid;
+        postData.authorEmail = user.email;
+        postData.authorName = user.email.split("@")[0];
+      }
+
+      await db.collection("posts").add(postData);
 
       alert("게시글 추가 완료!");
       loadPosts();
     });
 
-
-
     /* -------------------------------
-       2) 게시글 + 댓글 전체 불러오기
+       2) 게시글 + 댓글 불러오기
     ------------------------------- */
     async function loadPosts() {
       const postList = document.getElementById("postList");
       postList.innerHTML = "";
 
-      const snapshot = await db
-        .collection("posts")
+      const snapshot = await db.collection("posts")
         .orderBy("createdAt", "desc")
         .get();
 
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         const p = doc.data();
 
         const box = document.createElement("div");
         box.className = "postItem";
 
+        const authorText = p.authorName
+          ? `<a href="profile.html?uid=${p.authorUid}" class="authorLink">${p.authorName}</a>`
+          : `<span style="color:#777;">익명</span>`;
+
         box.innerHTML = `
           <h3>${p.title}</h3>
           <p>${p.content}</p>
+
+          <div><b>작성자:</b> ${authorText}</div>
+
           <small>${p.createdAt.toDate()}</small>
 
           <div class="commentBox">
@@ -137,17 +181,14 @@
 
         postList.appendChild(box);
 
-        // 댓글 불러오기
         loadComments(doc.id);
       });
     }
 
-
-
     /* -------------------------------
-       3) 댓글 저장
+       3) 댓글 저장 (로그인 여부 반영)
     ------------------------------- */
-    document.addEventListener("click", async (e) => {
+    document.addEventListener("click", async e => {
       if (!e.target.classList.contains("commentBtn")) return;
 
       const postId = e.target.getAttribute("data-id");
@@ -156,29 +197,36 @@
 
       if (!text) return alert("댓글을 입력하세요!");
 
-      await db
-        .collection("posts")
+      const user = auth.currentUser;
+
+      const commentData = {
+        text,
+        createdAt: new Date()
+      };
+
+      if (user) {
+        commentData.nickname = user.email.split("@")[0];
+        commentData.userId = user.uid;
+      } else {
+        commentData.nickname = "익명";
+        commentData.userId = "guest";
+      }
+
+      await db.collection("posts")
         .doc(postId)
         .collection("comments")
-        .add({
-          userId: "guest",
-          nickname: "익명",
-          text,
-          createdAt: new Date(),
-        });
+        .add(commentData);
 
       input.value = "";
       loadComments(postId);
     });
 
-
-
     /* -------------------------------
        4) 댓글 불러오기
     ------------------------------- */
     async function loadComments(postId) {
-      const commentList = document.getElementById("comments_" + postId);
-      commentList.innerHTML = "";
+      const area = document.getElementById("comments_" + postId);
+      area.innerHTML = "";
 
       const snapshot = await db
         .collection("posts")
@@ -187,18 +235,20 @@
         .orderBy("createdAt", "asc")
         .get();
 
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         const c = doc.data();
-
         const div = document.createElement("div");
-        div.textContent = `${c.nickname}: ${c.text}`;
-        commentList.appendChild(div);
+
+        div.innerHTML = `
+          <b>${c.nickname}</b>: ${c.text}
+        `;
+
+        area.appendChild(div);
       });
     }
 
-
-    // 페이지 열릴 때 실행
     loadPosts();
   </script>
+
 </body>
 </html>
