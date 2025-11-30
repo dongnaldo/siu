@@ -1,86 +1,226 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>내 프로필</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>프로필</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: "Apple SD Gothic Neo", Arial, sans-serif;
+    background:#fff;
+    -webkit-font-smoothing:antialiased;
+  }
 
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-            font-family: Arial, sans-serif;
-        }
+  .top {
+    height:56px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:0 14px;
+    background:#fff;
+    border-bottom:1px solid #eee;
+    position:sticky;
+    top:0;
+    z-index:50;
+  }
+  .back {
+    font-size:22px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .title { font-weight:600; }
 
-        .top-bar {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+  /* 컨테이너: 모바일사이즈 기준 (너가 디자인한 Figma 폭에 맞춤) */
+  .wrap {
+    max-width:420px;
+    margin:0 auto;
+    position:relative;
+  }
 
-        .back-btn {
-            font-size: 20px;
-            cursor: pointer;
-            margin-right: 14px;
-        }
+  /* 프로필 디자인 이미지 (Figma에서 export한 전체 화면) */
+  .profile-bg {
+    width:100%;
+    display:block;
+    height:auto;
+  }
 
-        .profile-container {
-            position: relative;
-            width: 100%;
-            max-width: 450px;
-            margin: 0 auto;
-        }
+  /* 이미지 위에 덮을 overlay 영역 (버튼 등) */
+  .overlay {
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none; /* 기본은 덮여도 클릭 안되게 (아래 요소 제어 위해) */
+  }
 
-        .profile-img {
-            width: 100%;
-            display: block;
-        }
+  /* 실제 클릭 가능한 버튼은 pointer-events:all */
+  .overlay .btn {
+    pointer-events:all;
+    border:2px solid #000;
+    background:#fff;
+    border-radius:22px;
+    padding:8px 14px;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow:0 6px 10px rgba(0,0,0,0.08);
+  }
 
-        .overlay-btns {
-            position: absolute;
-            bottom: 20px;
-            left: 0;
-            width: 100%;
-            display: flex;
-            justify-content: space-evenly;
-        }
+  /* 뒤로가기(왼쪽 상단) - 이미지 기준 절대 위치 */
+  .overlay .btn-back {
+    position:absolute;
+    top:14px;
+    left:12px;
+    font-size:22px;
+    padding:6px 10px;
+  }
 
-        .btn {
-            padding: 12px 20px;
-            background-color: white;
-            border-radius: 18px;
-            font-size: 14px;
-            font-weight: bold;
-            border: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            cursor: pointer;
-        }
-    </style>
+  /* 메인 버튼 그룹 - 이미지 중심 하단 쪽에 나타나도록 조정 (디자인에 맞게 숫자 조절) */
+  .overlay .btn-group {
+    position:absolute;
+    top:170px; /* 이미지에 맞춰 숫자 수정 가능 */
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:12px;
+  }
+
+  /* 프로필 뱃지/아이템 영역 (아래쪽 그리드) */
+  .badges {
+    padding:18px 14px 80px;
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:18px;
+    background:#fff;
+  }
+  .badge {
+    text-align:center;
+  }
+  .badge img {
+    width:80px;
+    height:80px;
+    object-fit:cover;
+    display:block;
+    margin:0 auto 8px;
+  }
+  .badge span{display:block; font-size:14px; color:#333}
+
+  /* 반응형: 화면 크게 보면 이미지 폭 늘어나므로 버튼 위치 보정 (필요하면 조절) */
+  @media(min-width:700px){
+    .wrap{max-width:700px}
+    .overlay .btn-group{top:210px}
+  }
+</style>
 </head>
-
 <body>
 
-    <!-- 상단 네비 (홈으로 돌아가기) -->
-    <div class="top-bar">
-        <div class="back-btn" onclick="location.href='index.html'">←</div>
-        <h3>내 프로필</h3>
+  <div class="top">
+    <div class="back" onclick="location.href='index.html'">←</div>
+    <div class="title">프로필</div>
+  </div>
+
+  <div class="wrap" id="wrap">
+    <!-- 프로필 전체 디자인 이미지 (Default: 내 프로필) -->
+    <!-- **경로 중요**: profile_me.png / profile_other.png 파일이 profile.html과 동일한 폴더에 있어야 함 -->
+    <img id="profileImage" class="profile-bg" src="profile_me.png" alt="프로필 디자인">
+
+    <!-- overlay: 버튼들을 이미지 위에 덮음 -->
+    <div class="overlay" id="overlay">
+      <button class="btn btn-back" id="overlayBack" title="뒤로">←</button>
+
+      <div class="btn-group" id="btnGroup">
+        <!-- 버튼은 JS에서 채움 (내/타인 구분) -->
+      </div>
     </div>
 
-    <!-- 프로필 이미지 섹션 -->
-    <div class="profile-container">
-
-        <!-- 너의 사진 (2번 프로필 이미지) -->
-        <img src="profile_me.png" class="profile-img">
-
-        <!-- 이미지 위에 버튼 -->
-        <div class="overlay-btns">
-            <button class="btn">프로필 수정</button>
-            <button class="btn">설정</button>
-        </div>
+    <!-- 아래 실제 콘텐츠(뱃지 등) : 이미지 밑에 그대로 표시 -->
+    <div class="badges" id="badges">
+      <div class="badge">
+        <img src="badge.png" alt="badge">
+        <span>무플의 수호자</span>
+      </div>
+      <div class="badge">
+        <img src="badge.png" alt="badge">
+        <span>따뜻한 이웃</span>
+      </div>
+      <div class="badge">
+        <img src="badge.png" alt="badge">
+        <span>이웃 연결자</span>
+      </div>
+      <div class="badge">
+        <img src="badge.png" alt="badge">
+        <span>후원자 배지</span>
+      </div>
     </div>
+  </div>
 
+<script>
+  // URL 파라미터 읽기: ?type=other  또는 ?uid=someUserId
+  const params = new URLSearchParams(window.location.search);
+  const type = params.get('type'); // 'me' 또는 'other'
+  const uid = params.get('uid');   // 있으면 상대 프로필으로 간주
+
+  const img = document.getElementById('profileImage');
+  const btnGroup = document.getElementById('btnGroup');
+
+  // 기본: 내 프로필
+  let profileType = 'me';
+  if (type === 'other' || uid) profileType = 'other';
+
+  // 이미지 파일 경로 (같은 폴더에 profile_me.png, profile_other.png 있어야 함)
+  if (profileType === 'other') {
+    img.src = 'profile_other.png';
+    // 상대 프로필일 때: 개인채팅, 신고 버튼
+    btnGroup.innerHTML = `
+      <button class="btn" id="chatBtn">개인채팅</button>
+      <button class="btn" id="reportBtn">신고</button>
+    `;
+  } else {
+    img.src = 'profile_me.png';
+    // 내 프로필일 때: 내가 쓴 글, 스크랩, 프로필편집 등
+    btnGroup.innerHTML = `
+      <button class="btn" id="myPostsBtn">내가 쓴 글</button>
+      <button class="btn" id="scrapBtn">스크랩</button>
+      <button class="btn" id="editBtn">프로필 수정</button>
+    `;
+  }
+
+  // 버튼 동작: (예시) 실제 기능은 너가 Firebase auth/페이지 연결해서 구현하면 됨
+  document.addEventListener('click', (e) => {
+    if (!e.target.matches('.btn')) return;
+
+    const id = e.target.id;
+    if (id === 'chatBtn') {
+      // 예: 상대 uid 가 있으면 개인채팅 페이지로 이동
+      const targetUid = uid || 'unknown';
+      alert('개인채팅 열기: ' + targetUid);
+      // location.href = `chat.html?peer=${targetUid}`;
+    } else if (id === 'reportBtn') {
+      alert('신고 접수 (예시)');
+      // 서버로 신고 API 호출 등
+    } else if (id === 'myPostsBtn') {
+      // 내가 쓴 글 화면으로 이동
+      location.href = 'index.html#my-posts';
+    } else if (id === 'scrapBtn') {
+      alert('스크랩 목록 (예시)');
+      // location.href = 'scrap.html';
+    } else if (id === 'editBtn') {
+      // 프로필 편집 페이지로 이동
+      location.href = 'profile_edit.html';
+    }
+  });
+
+  // 뒤로 버튼 (overlay에 따로 있음) - 이미 상단 back 이 있음
+  document.getElementById('overlayBack').addEventListener('click', () => {
+    // 뒤로가기 혹은 홈으로
+    if (document.referrer) history.back();
+    else location.href = 'index.html';
+  });
+
+  // --- 선택: 버튼 위치 미세조정 필요하면 여기에 추가로 계산해서 위치 변경 가능 ---
+  // 예: 화면 폭에 따라 btn-group top 값 바꾸는 등
+</script>
 </body>
 </html>
