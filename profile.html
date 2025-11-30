@@ -1,83 +1,52 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>프로필 화면</title>
-<style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>프로필</title>
+  <style>
     body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        font-family: sans-serif;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
     }
 
-    .container {
-        position: relative;
-        width: 100vw;
-        height: 100vh;
-        background-size: cover;
-        background-position: top center;
+    #profileImage {
+      width: 90%;
+      max-width: 350px;
+      height: auto;
+      border-radius: 20px;
+      object-fit: cover;
+      margin-top: 20px;
     }
-
-    /* 공통 버튼 스타일 */
-    .btn {
-        position: absolute;
-        padding: 5px 20px;
-        border: 2px solid #000;
-        background: #fff;
-        border-radius: 20px;
-        font-size: 18px;
-    }
-
-    /* 뒤로가기 버튼 */
-    #back {
-        position: absolute;
-        top: 25px;
-        left: 20px;
-        font-size: 40px;
-        background: none;
-        border: none;
-    }
-</style>
+  </style>
 </head>
 <body>
 
-<script>
-    /* 
-       mode = "other" → 상대방 프로필
-       mode = "me" → 내 프로필
-    */
-    const mode = "other";  // 원하는 걸로 바꿔라 ("other" 또는 "me")
+  <h2>프로필</h2>
+  <img id="profileImage" src="" alt="Profile Image">
 
-    document.addEventListener("DOMContentLoaded", () => {
-        const container = document.createElement("div");
-        container.className = "container";
+  <script>
+    // URL에서 uid 받아오기
+    const urlParams = new URLSearchParams(window.location.search);
+    const uid = urlParams.get("uid");
 
-        if (mode === "other") {
-            /* 상대방 프로필 배경 이미지 */
-            container.style.backgroundImage = "url('profile-bg-1.png')";
+    // 예시 데이터 (너의 DB JSON 위치에 맞춰 수정)
+    const profiles = {
+      "user1": "https://dongnaldo.github.io/siu/img/profile1.jpg",
+      "user2": "https://dongnaldo.github.io/siu/img/profile2.jpg",
+      "user3": "https://dongnaldo.github.io/siu/img/profile3.jpg",
+    };
 
-            /* 뒤로가기 버튼 */
-            container.innerHTML += `
-                <button id="back">〈</button>
-                <button class="btn" id="chat" style="top:255px; left:calc(50% - 120px);">개인채팅</button>
-                <button class="btn" id="report" style="top:255px; left:calc(50% + 20px);">신고</button>
-            `;
+    // 이미지 표시
+    const imgTag = document.getElementById("profileImage");
 
-        } else if (mode === "me") {
-            /* 내 프로필 배경 이미지 */
-            container.style.backgroundImage = "url('profile-bg-2.png')";
-
-            container.innerHTML += `
-                <button id="back">〈</button>
-                <button class="btn" id="myPosts" style="top:255px; left:calc(50% - 55px);">내가 쓴 글</button>
-                <button class="btn" id="scrap" style="top:305px; left:calc(50% - 55px);">스크랩</button>
-            `;
-        }
-
-        document.body.appendChild(container);
-    });
-</script>
+    if (profiles[uid]) {
+      imgTag.src = profiles[uid];
+    } else {
+      imgTag.src = "https://via.placeholder.com/350x350?text=No+Image";
+    }
+  </script>
 
 </body>
 </html>
