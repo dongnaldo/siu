@@ -26,8 +26,29 @@
 
     <h2>프로필</h2>
 
-    <!-- 여기만 수정됨 -->
-    <img id="profileImage" src="profile-bg-1.png" alt="Profile Image">
+    <!-- 여기에 JS가 사진을 자동으로 넣어줌 -->
+    <img id="profileImage" src="" alt="Profile Image">
+
+    <script>
+        // URL 예시: profile.html?user=me 또는 profile.html?user=other
+        const params = new URLSearchParams(window.location.search);
+        const userType = params.get("user"); 
+
+        const imageElement = document.getElementById("profileImage");
+
+        if (userType === "me") {
+            // 내 프로필 이미지
+            imageElement.src = "profile-bg-2.png"; 
+        } 
+        else if (userType === "other") {
+            // 상대방 프로필 이미지
+            imageElement.src = "profile-bg-1.png"; 
+        }
+        else {
+            // 기본 이미지 (파라미터 없을 때)
+            imageElement.src = "profile-bg-1.png";
+        }
+    </script>
 
 </body>
 </html>
