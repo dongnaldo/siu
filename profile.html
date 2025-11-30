@@ -1,112 +1,195 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>사용자 프로필</title>
-
-    <style>
-        body {
-            font-family: Arial;
-            padding: 20px;
-            text-align: center;
-        }
-        #profileImage {
-            width: 200px;
-            height: 200px;
-            border-radius: 20px;
-            object-fit: cover;
-            margin-top: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            margin-top: 20px;
-            background: #4f79ff;
-            color:white;
-            border:none;
-            border-radius:10px;
-            font-size:18px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>사용자 프로필</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; text-align:center; }
+    .wrap { max-width:900px; margin:0 auto; }
+    h1 { font-size:32px; margin-bottom:20px; }
+    #profileImage { width:240px; height:240px; border-radius:18px; object-fit:cover; display:block; margin: 0 auto 12px; }
+    #nickname { font-size:20px; margin-bottom:8px; }
+    #subtext { color:#666; margin-bottom:18px; }
+    .btn { display:inline-block; padding:10px 16px; border-radius:10px; margin:6px; cursor:pointer; border:none; font-size:15px; }
+    .btn-primary { background:#3b7bff; color:#fff; }
+    .btn-ghost { background:#f2f2f2; color:#333; border:1px solid #ddd; }
+    .notice { color:#c33; margin-top:30px; }
+  </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <h1 id="title">사용자 프로필</h1>
 
-    <h1>사용자 프로필</h1>
+    <img id="profileImage" src="" alt="프로필 이미지" />
 
-    <img id="profileImage" src="" alt="Profile">
+    <div id="nickname">—</div>
+    <div id="subtext"></div>
 
-    <h2 id="nickname"></h2>
+    <div id="actions"></div>
 
-    <button onclick="location.href='index.html'">홈으로</button>
+    <div id="anonNotice" class="notice" style="display:none;"></div>
+    <div style="margin-top:28px;">
+      <button class="btn btn-ghost" id="homeBtn">홈으로</button>
+    </div>
+  </div>
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBgKHGln9fdP3Fo4P_cm0CK3Vwl4GeTeUE",
-            authDomain: "dongnaldo-51239.firebaseapp.com",
-            projectId: "dongnaldo-51239",
-            storageBucket: "dongnaldo-51239.appspot.com",
-            messagingSenderId: "129624651466",
-            appId: "1:129624651466:web:ff1069d13895f9b537e633",
-            measurementId: "G-M3M2B819Q3"
+  <script>
+    // --- Firebase 설정 (네 프로젝트 키 그대로 사용) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgKHGln9fdP3Fo4P_cm0CK3Vwl4GeTeUE",
+      authDomain: "dongnaldo-51239.firebaseapp.com",
+      projectId: "dongnaldo-51239",
+      storageBucket: "dongnaldo-51239.appspot.com",
+      messagingSenderId: "129624651466",
+      appId: "1:129624651466:web:ff1069d13895f9b537e633",
+      measurementId: "G-M3M2B819Q3"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // --- DOM 요소 ---
+    const imgEl = document.getElementById("profileImage");
+    const nickEl = document.getElementById("nickname");
+    const subEl = document.getElementById("subtext");
+    const actionsEl = document.getElementById("actions");
+    const titleEl = document.getElementById("title");
+    const anonNotice = document.getElementById("anonNotice");
+    document.getElementById("homeBtn").addEventListener("click", () => location.href = "index.html");
+
+    // 기본 이미지(로컬에 있는 파일 이름 고려)
+    const DEFAULT_OTHER = "profile-bg-1.png"; // 상대방 기본
+    const DEFAULT_ME = "profile-bg-2.png";    // 내 기본
+
+    // URL에서 uid 파라미터 읽기
+    const params = new URLSearchParams(window.location.search);
+    const urlUid = params.get("uid"); // index.html에서 넘겨준 경우 (작성자 uid)
+
+    // 로그인 상태를 기다렸다가 처리
+    auth.onAuthStateChanged(async (currentUser) => {
+      try {
+        // CASE A: url에 uid가 있으면 -> 그 사람 프로필(상대방 또는 내가 직접 쓴 글의 uid일 경우 내 프로필)
+        if (urlUid) {
+          const isMe = currentUser && (currentUser.uid === urlUid);
+          await showProfile(urlUid, isMe);
+          return;
+        }
+
+        // CASE B: url에 uid 없고 로그인 되어 있으면 -> 내 프로필
+        if (currentUser) {
+          await showProfile(currentUser.uid, true);
+          return;
+        }
+
+        // CASE C: url에 uid 없고 로그인 안되어 있으면 -> 안내 (잘못된 접근)
+        // 사용자 요구: 로그인 안 한 상태에서 다른 사람 프로필 보려면 index에서 uid를 넘겨야 함.
+        showAnonymousFallback();
+      } catch (err) {
+        console.error("프로필 표시 오류:", err);
+        anonNotice.style.display = "block";
+        anonNotice.innerText = "프로필을 불러오는 중 오류가 발생했습니다.";
+      }
+    });
+
+    // 프로필 로드 및 UI 세팅
+    async function showProfile(uid, isMe) {
+      // 기본 UI
+      titleEl.innerText = isMe ? "내 프로필" : "사용자 프로필";
+      anonNotice.style.display = "none";
+      actionsEl.innerHTML = "";
+
+      // Firestore users 컬렉션에서 프로필 정보 시도
+      let imageUrl = null;
+      let nickname = null;
+
+      try {
+        const doc = await db.collection("users").doc(uid).get();
+        if (doc.exists) {
+          const data = doc.data();
+          nickname = data.nickname || data.displayName || null;
+          // 우선순위: profileImage (절대URL) -> photoURL -> null
+          imageUrl = data.profileImage || data.photoURL || null;
+        }
+      } catch (e) {
+        console.warn("users 컬렉션 읽기 실패:", e);
+      }
+
+      // 이미지 결정: Firestore에 없으면 기본 이미지 사용
+      if (!imageUrl) {
+        imageUrl = isMe ? DEFAULT_ME : DEFAULT_OTHER;
+      }
+
+      // 닉네임 결정
+      if (!nickname) {
+        nickname = isMe ? "나" : "사용자";
+      }
+
+      // 화면 적용
+      imgEl.src = imageUrl;
+      nickEl.innerText = nickname;
+      subEl.innerText = isMe ? "자기소개를 입력하세요." : "방문자 프로필입니다.";
+
+      // 액션버튼 설정 (내프로필이면 편집, 상대면 채팅/신고 등)
+      if (isMe) {
+        const editBtn = createBtn("프로필 편집", "btn-primary");
+        editBtn.onclick = () => {
+          // 편집 페이지 있으면 연결. 없으면 알림.
+          // location.href = "edit-profile.html";
+          alert("프로필 편집(구현 필요)");
         };
-        firebase.initializeApp(firebaseConfig);
+        actionsEl.appendChild(editBtn);
+      } else {
+        const msgBtn = createBtn("개인채팅", "btn-primary");
+        msgBtn.onclick = () => {
+          // 개인채팅으로 이동(구현 시)
+          alert("개인채팅 열기(구현 필요)");
+        };
+        const reportBtn = createBtn("신고", "btn-ghost");
+        reportBtn.onclick = () => {
+          alert("신고(구현 필요)");
+        };
+        actionsEl.appendChild(msgBtn);
+        actionsEl.appendChild(reportBtn);
+      }
+    }
 
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+    // uid 없고 비로그인 상태일 때 처리
+    function showAnonymousFallback() {
+      titleEl.innerText = "사용자 프로필";
+      imgEl.src = DEFAULT_OTHER;
+      nickEl.innerText = "사용자";
+      subEl.innerText = "게시글에서 '작성자 이름'을 눌러 들어오시면 해당 사용자의 프로필이 표시됩니다. (로그인 없이 본인 프로필은 볼 수 없습니다)";
+      actionsEl.innerHTML = "";
+      anonNotice.style.display = "block";
+      anonNotice.innerText = "※ 현재 로그인이 되어 있지 않습니다.";
+    }
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetUid = urlParams.get("uid");  // 게시물에서 넘긴 uid (작성자 uid)
-
-        auth.onAuthStateChanged(async user => {
-
-            /// 🔥 CASE 1: uid 파라미터 있음 → 무조건 상대방 프로필
-            if (targetUid) {
-                loadUserProfile(targetUid);
-                return;
-            }
-
-            /// 🔥 CASE 2: uid 없음 + 로그인 O → 내 프로필
-            if (user) {
-                loadUserProfile(user.uid);
-                return;
-            }
-
-            /// 🔥 CASE 3: uid 없음 + 로그인 X → 잘못된 접근 → 기본 상대방 프로필
-            showAnonymousProfile();
-        });
-
-        async function loadUserProfile(uid) {
-            let doc = await db.collection("users").doc(uid).get();
-
-            // DB에 프로필 등록 안 된 회원이면 기본 프로필
-            if (!doc.exists) {
-                document.getElementById("nickname").innerText = "사용자";
-                document.getElementById("profileImage").src = "profile-bg-1.png";
-                return;
-            }
-
-            let data = doc.data();
-
-            document.getElementById("nickname").innerText = data.nickname || "사용자";
-
-            if (data.profileImage) {
-                document.getElementById("profileImage").src = data.profileImage;
-            } else {
-                document.getElementById("profileImage").src = "profile-bg-1.png";
-            }
-        }
-
-        function showAnonymousProfile() {
-            document.getElementById("nickname").innerText = "사용자";
-            document.getElementById("profileImage").src = "profile-bg-1.png";
-        }
-    </script>
+    // 버튼 생성 헬퍼
+    function createBtn(text, cls) {
+      const b = document.createElement("button");
+      b.className = "btn " + (cls === "btn-primary" ? "btn-primary" : "btn-ghost");
+      b.innerText = text;
+      // 스타일 직접 적용 (간단)
+      if (cls === "btn-primary") {
+        b.style.background = "#3b7bff";
+        b.style.color = "#fff";
+        b.style.border = "none";
+      } else {
+        b.style.background = "#f2f2f2";
+        b.style.color = "#333";
+        b.style.border = "1px solid #ddd";
+      }
+      b.style.padding = "10px 14px";
+      b.style.borderRadius = "10px";
+      b.style.margin = "6px";
+      return b;
+    }
+  </script>
 </body>
 </html>
