@@ -1,52 +1,33 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>프로필</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      text-align: center;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로필</title>
 
-    #profileImage {
-      width: 90%;
-      max-width: 350px;
-      height: auto;
-      border-radius: 20px;
-      object-fit: cover;
-      margin-top: 20px;
-    }
-  </style>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #profileImage {
+            width: 90%;
+            max-width: 350px;
+            height: auto;
+            border-radius: 20px;
+            object-fit: cover;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
 
-  <h2>프로필</h2>
-  <img id="profileImage" src="" alt="Profile Image">
+    <h2>프로필</h2>
 
-  <script>
-    // URL에서 uid 받아오기
-    const urlParams = new URLSearchParams(window.location.search);
-    const uid = urlParams.get("uid");
-
-    // 예시 데이터 (너의 DB JSON 위치에 맞춰 수정)
-    const profiles = {
-      "user1": "https://dongnaldo.github.io/siu/img/profile1.jpg",
-      "user2": "https://dongnaldo.github.io/siu/img/profile2.jpg",
-      "user3": "https://dongnaldo.github.io/siu/img/profile3.jpg",
-    };
-
-    // 이미지 표시
-    const imgTag = document.getElementById("profileImage");
-
-    if (profiles[uid]) {
-      imgTag.src = profiles[uid];
-    } else {
-      imgTag.src = "https://via.placeholder.com/350x350?text=No+Image";
-    }
-  </script>
+    <!-- 여기만 수정됨 -->
+    <img id="profileImage" src="profile-bg-1.png" alt="Profile Image">
 
 </body>
 </html>
