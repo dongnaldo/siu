@@ -10,43 +10,87 @@
             font-family: Arial, sans-serif;
             padding: 20px;
             text-align: center;
+            background: #fff;
         }
 
         #profileImage {
             width: 90%;
-            max-width: 350px;
-            height: auto;
+            max-width: 360px;
             border-radius: 20px;
-            object-fit: cover;
-            margin-top: 20px;
+            margin-top: 25px;
+        }
+
+        .buttons {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-gray {
+            background: #ddd;
+            color: #333;
         }
     </style>
 </head>
 <body>
 
-    <h2>프로필</h2>
+    <h2 id="profileTitle">프로필</h2>
 
-    <!-- 실제 프로필 사진 -->
+    <!-- 프로필 이미지 -->
     <img id="profileImage" src="" alt="Profile Image">
 
+    <div class="buttons" id="buttonArea"></div>
+
     <script>
-        // URL 예: profile.html?user=me 또는 profile.html?user=other
+        // URL 파라미터 읽기
         const params = new URLSearchParams(window.location.search);
-        const userType = params.get("user"); 
+        const type = params.get("type");        // me / other
+        const img = params.get("img");          // 이미지 파일명
 
-        const imageElement = document.getElementById("profileImage");
+        const profileImage = document.getElementById("profileImage");
+        const profileTitle = document.getElementById("profileTitle");
+        const buttonArea = document.getElementById("buttonArea");
 
-        if (userType === "me") {
-            // 내 프로필 이미지
-            imageElement.src = "profile-bg-2.png";
-        } 
-        else if (userType === "other") {
-            // 상대방 프로필 이미지
-            imageElement.src = "profile-bg-1.png";
+        // 기본 이미지 (혹시 파라미터 없을 경우 대비)
+        const defaultMyImage = "profile-bg-2.png";
+        const defaultOtherImage = "profile-bg-1.png";
+
+        // 1) 표시할 이미지 결정
+        if (img) {
+            profileImage.src = img; // URL로 직접 받은 이미지 사용
+        } else {
+            profileImage.src = (type === "other") ? defaultOtherImage : defaultMyImage;
+        }
+
+        // 2) 사용자 종류에 따른 UI 변화
+        if (type === "other") {
+            profileTitle.innerText = "상대방 프로필";
+
+            buttonArea.innerHTML = `
+                <button class="btn btn-primary">메시지 보내기</button>
+                <button class="btn btn-gray">차단</button>
+            `;
         }
         else {
-            // ⭐ 파라미터 없으면 "내 프로필" 뜨도록 기본값 설정
-            imageElement.src = "profile-bg-2.png";
+            profileTitle.innerText = "내 프로필";
+
+            buttonArea.innerHTML = `
+                <button class="btn btn-primary">프로필 편집</button>
+            `;
         }
     </script>
 
