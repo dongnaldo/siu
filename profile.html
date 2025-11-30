@@ -1,91 +1,112 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>프로필</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-    #profileImage {
-      width: 90%; max-width: 360px; border-radius: 20px; margin-top: 25px;
-    }
-    #homeBtn {
-      margin-top: 30px;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      background-color: #007bff;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사용자 프로필</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            text-align: center;
+        }
+        #profileImage {
+            width: 200px;
+            height: 200px;
+            border-radius: 20px;
+            object-fit: cover;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            background: #4f79ff;
+            color:white;
+            border:none;
+            border-radius:10px;
+            font-size:18px;
+            cursor: pointer;
+        }
+    </style>
 </head>
+
 <body>
 
-  <h2 id="profileTitle">프로필</h2>
-  <img id="profileImage" src="" alt="Profile Image">
-  <div>
-    <button id="homeBtn">홈으로</button>
-  </div>
+    <h1>사용자 프로필</h1>
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script>
-    // Firebase 설정 (index.html과 동일해야 함)
-    const firebaseConfig = {
-      apiKey: "...",
-      authDomain: "...",
-      projectId: "...",
-      storageBucket: "...",
-      messagingSenderId: "...",
-      appId: "...",
-      measurementId: "..."
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    <img id="profileImage" src="" alt="Profile">
 
-    // URL 쿼리에서 uid 가져오기
-    const params = new URLSearchParams(window.location.search);
-    const viewUid = params.get("uid");  // 예: ?uid=abcdef123
+    <h2 id="nickname"></h2>
 
-    // 기본 이미지 (uid 기반 사진 없을 경우)
-    const defaultImage = "profile-bg-1.png";
+    <button onclick="location.href='index.html'">홈으로</button>
 
-    // Elements
-    const profileImage = document.getElementById("profileImage");
-    const profileTitle = document.getElementById("profileTitle");
-    const homeBtn = document.getElementById("homeBtn");
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-    // 홈으로 돌아가기
-    homeBtn.addEventListener("click", () => {
-      window.location.href = "index.html";
-    });
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgKHGln9fdP3Fo4P_cm0CK3Vwl4GeTeUE",
+            authDomain: "dongnaldo-51239.firebaseapp.com",
+            projectId: "dongnaldo-51239",
+            storageBucket: "dongnaldo-51239.appspot.com",
+            messagingSenderId: "129624651466",
+            appId: "1:129624651466:web:ff1069d13895f9b537e633",
+            measurementId: "G-M3M2B819Q3"
+        };
+        firebase.initializeApp(firebaseConfig);
 
-    // 로그인 상태 확인 → 그리고 프로필 보여주기
-    auth.onAuthStateChanged(user => {
-      let isMe = false;
-      if (user && viewUid && user.uid === viewUid) {
-        isMe = true;
-      }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-      if (viewUid) {
-        // 유저의 프로필 사진 파일명을 uid로 가정
-        // 예: images/profiles/UID.jpg 또는 .png
-        // 만약 Firebase Storage 연동했다면 fetch URL 또는 signed URL 써야 함
-        profileImage.src = `images/profiles/${viewUid}.png`;
-      } else {
-        // uid 파라미터 없으면 기본 이미지
-        profileImage.src = defaultImage;
-      }
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetUid = urlParams.get("uid");  // 게시물에서 넘긴 uid (작성자 uid)
 
-      if (isMe) {
-        profileTitle.innerText = "내 프로필";
-      } else {
-        profileTitle.innerText = "사용자 프로필";
-      }
-    });
-  </script>
+        auth.onAuthStateChanged(async user => {
+
+            /// 🔥 CASE 1: uid 파라미터 있음 → 무조건 상대방 프로필
+            if (targetUid) {
+                loadUserProfile(targetUid);
+                return;
+            }
+
+            /// 🔥 CASE 2: uid 없음 + 로그인 O → 내 프로필
+            if (user) {
+                loadUserProfile(user.uid);
+                return;
+            }
+
+            /// 🔥 CASE 3: uid 없음 + 로그인 X → 잘못된 접근 → 기본 상대방 프로필
+            showAnonymousProfile();
+        });
+
+        async function loadUserProfile(uid) {
+            let doc = await db.collection("users").doc(uid).get();
+
+            // DB에 프로필 등록 안 된 회원이면 기본 프로필
+            if (!doc.exists) {
+                document.getElementById("nickname").innerText = "사용자";
+                document.getElementById("profileImage").src = "profile-bg-1.png";
+                return;
+            }
+
+            let data = doc.data();
+
+            document.getElementById("nickname").innerText = data.nickname || "사용자";
+
+            if (data.profileImage) {
+                document.getElementById("profileImage").src = data.profileImage;
+            } else {
+                document.getElementById("profileImage").src = "profile-bg-1.png";
+            }
+        }
+
+        function showAnonymousProfile() {
+            document.getElementById("nickname").innerText = "사용자";
+            document.getElementById("profileImage").src = "profile-bg-1.png";
+        }
+    </script>
 </body>
 </html>
