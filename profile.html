@@ -20,71 +20,72 @@
         margin: auto;
     }
 
-    /* 너가 보내준 프로필 화면 이미지를 그대로 사용 */
+    /* 너가 보내준 프로필 화면 이미지를 전체 백그라운드처럼 사용 */
     .profile-bg {
         width: 100%;
         display: block;
     }
 
-    /* 모든 기능을 덮어서 얹는 컨테이너 */
+    /* 위에 기능(버튼/뒤로가기)을 덮는 영역 */
     .overlay {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        pointer-events: none; 
+        height: 100%;
+        pointer-events: none;
     }
 
     .btn, .back-btn {
         pointer-events: all;
     }
 
+    /* 뒤로가기 */
     .back-btn {
         position: absolute;
-        top: 10px;
-        left: 10px;
+        top: 12px;
+        left: 12px;
         font-size: 28px;
         background: none;
         border: none;
         cursor: pointer;
     }
 
-    /* 버튼 공통 */
+    /* 공통 버튼 스타일 */
     .btn {
         border: 2px solid black;
         background: white;
-        padding: 6px 12px;
+        padding: 6px 14px;
         border-radius: 20px;
         font-size: 16px;
         cursor: pointer;
     }
 
-    /* 버튼 배치 (이미지 기준 위치) */
+    /* 버튼 2개 나오는 위치 */
     .btn-area {
         position: absolute;
         top: 210px;
         left: 50%;
         transform: translateX(-50%);
         display: flex;
-        gap: 12px;
+        gap: 14px;
     }
-
 </style>
 </head>
 <body>
 
 <div class="profile-container">
 
-    <!-- 너가 보내준 프로필 디자인 이미지를 그대로 사용 -->
-    <img id="profileImage" class="profile-bg" src="img/profile_me.png">
+    <!-- 배경 프로필 이미지 -->
+    <img id="profileImage" class="profile-bg" src="image/profile_me.png">
 
-    <!-- 기능을 덮어서 배치 -->
+    <!-- 기능 덮기 -->
     <div class="overlay">
 
-        <!-- 뒤로가기 버튼 -->
+        <!-- 뒤로가기 -->
         <button class="back-btn" onclick="history.back()">←</button>
 
-        <!-- 버튼 영역 -->
+        <!-- 버튼 2개 위치 -->
         <div class="btn-area" id="btnArea"></div>
 
     </div>
@@ -92,25 +93,28 @@
 
 <script>
 /*
-    profile_type = "me"   → 내 프로필
-    profile_type = "other"→ 남의 프로필
+    profile.html?type=me     → 내 프로필
+    profile.html?type=other  → 상대 프로필
 */
+
 const urlParams = new URLSearchParams(window.location.search);
-const type = urlParams.get("type");  
+const type = urlParams.get("type");
 
 const btnArea = document.getElementById("btnArea");
-
-// 내 프로필 이미지 / 상대 프로필 이미지 변경
 const bgImg = document.getElementById("profileImage");
 
 if (type === "other") {
-    bgImg.src = "img/profile_other.png";   // 상대 프로필 디자인 이미지
+    /* 상대 프로필 화면 */
+    bgImg.src = "image/profile_other.png";
+
     btnArea.innerHTML = `
         <button class="btn">개인채팅</button>
         <button class="btn">신고</button>
     `;
 } else {
-    bgImg.src = "img/profile_me.png";      // 내 프로필 디자인 이미지
+    /* 내 프로필 화면 */
+    bgImg.src = "image/profile_me.png";
+
     btnArea.innerHTML = `
         <button class="btn">내가 쓴 글</button>
         <button class="btn">스크랩</button>
