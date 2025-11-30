@@ -1,93 +1,122 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>프로필</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-        }
-        .top-bar {
-            width: 100%;
-            padding: 10px;
-            text-align: left;
-        }
-        .back-btn {
-            font-size: 30px;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-        .profile-img {
-            width: 180px;
-            height: 180px;
-            border-radius: 10px;
-            object-fit: cover;
-        }
-        .badge-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
-            width: 80%;
-            margin: 0 auto;
-            margin-top: 30px;
-        }
-        .badge-item img {
-            width: 120px;
-        }
-        .buttons {
-            margin-top: 15px;
-        }
-        .btn {
-            border: 2px solid black;
-            padding: 8px 20px;
-            border-radius: 20px;
-            margin: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            background: white;
-        }
-        .username {
-            font-size: 26px;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>프로필</title>
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+        background: #ffffff;
+    }
+
+    .profile-container {
+        position: relative;
+        width: 100%;
+        max-width: 480px;
+        margin: auto;
+    }
+
+    /* 너가 보내준 프로필 화면 이미지를 그대로 사용 */
+    .profile-bg {
+        width: 100%;
+        display: block;
+    }
+
+    /* 모든 기능을 덮어서 얹는 컨테이너 */
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        pointer-events: none; 
+    }
+
+    .btn, .back-btn {
+        pointer-events: all;
+    }
+
+    .back-btn {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 28px;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    /* 버튼 공통 */
+    .btn {
+        border: 2px solid black;
+        background: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    /* 버튼 배치 (이미지 기준 위치) */
+    .btn-area {
+        position: absolute;
+        top: 210px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 12px;
+    }
+
+</style>
 </head>
 <body>
-    <div class="top-bar">
-        <span class="back-btn" onclick="location.href='index.html'">&#x276E;</span>
+
+<div class="profile-container">
+
+    <!-- 너가 보내준 프로필 디자인 이미지를 그대로 사용 -->
+    <img id="profileImage" class="profile-bg" src="img/profile_me.png">
+
+    <!-- 기능을 덮어서 배치 -->
+    <div class="overlay">
+
+        <!-- 뒤로가기 버튼 -->
+        <button class="back-btn" onclick="history.back()">←</button>
+
+        <!-- 버튼 영역 -->
+        <div class="btn-area" id="btnArea"></div>
+
     </div>
+</div>
 
-    <img src="img/profile_sample.jpg" class="profile-img" />
+<script>
+/*
+    profile_type = "me"   → 내 프로필
+    profile_type = "other"→ 남의 프로필
+*/
+const urlParams = new URLSearchParams(window.location.search);
+const type = urlParams.get("type");  
 
-    <h2 class="username">하늘에지는별</h2>
+const btnArea = document.getElementById("btnArea");
 
-    <div class="buttons">
-        <button class="btn" onclick="location.href='chat.html'">개인채팅</button>
-        <button class="btn" onclick="alert('신고가 접수되었습니다.')">신고</button>
-    </div>
+// 내 프로필 이미지 / 상대 프로필 이미지 변경
+const bgImg = document.getElementById("profileImage");
 
-    <div class="badge-grid">
-        <div class="badge-item">
-            <img src="img/badge1.png" />
-            <p>무풀의 수호자</p>
-        </div>
-        <div class="badge-item">
-            <img src="img/badge2.png" />
-            <p>따뜻한 이웃</p>
-        </div>
-        <div class="badge-item">
-            <img src="img/badge3.png" />
-            <p>이웃 연결자</p>
-        </div>
-        <div class="badge-item">
-            <img src="img/badge4.png" />
-            <p>후원자 배지</p>
-        </div>
-    </div>
+if (type === "other") {
+    bgImg.src = "img/profile_other.png";   // 상대 프로필 디자인 이미지
+    btnArea.innerHTML = `
+        <button class="btn">개인채팅</button>
+        <button class="btn">신고</button>
+    `;
+} else {
+    bgImg.src = "img/profile_me.png";      // 내 프로필 디자인 이미지
+    btnArea.innerHTML = `
+        <button class="btn">내가 쓴 글</button>
+        <button class="btn">스크랩</button>
+    `;
+}
+</script>
+
 </body>
 </html>
